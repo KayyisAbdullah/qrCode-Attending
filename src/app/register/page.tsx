@@ -39,12 +39,26 @@ export default function RegisterPage() {
     emailValid: false
   })
 
+  const [touched, setTouched] = useState({
+    password: false,
+    confirmPassword: false,
+    email: false
+  })
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value
     }))
+
+    // Mark field as touched
+    if (name === 'password' || name === 'confirmPassword' || name === 'email') {
+      setTouched(prev => ({
+        ...prev,
+        [name]: true
+      }))
+    }
 
     // Real-time validation
     if (name === 'password') {
@@ -76,13 +90,6 @@ export default function RegisterPage() {
     setIsLoading(true)
     setError('')
     setSuccess('')
-
-    // Reset validation states
-    setValidation({
-      passwordLength: false,
-      passwordMatch: false,
-      emailValid: false
-    })
 
     // Validate form
     if (formData.password !== formData.confirmPassword) {
@@ -146,6 +153,11 @@ export default function RegisterPage() {
           passwordLength: false,
           passwordMatch: false,
           emailValid: false
+        })
+        setTouched({
+          password: false,
+          confirmPassword: false,
+          email: false
         })
         
         // Show success message then redirect
@@ -245,7 +257,7 @@ export default function RegisterPage() {
                   required
                   className="h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 />
-                {formData.email && (
+                {touched.email && formData.email && (
                   <div className="flex items-center text-xs">
                     {validation.emailValid ? (
                       <CheckCircle className="w-3 h-3 text-green-600 mr-1" />
@@ -253,7 +265,7 @@ export default function RegisterPage() {
                       <XCircle className="w-3 h-3 text-red-600 mr-1" />
                     )}
                     <span className={validation.emailValid ? 'text-green-600' : 'text-red-600'}>
-                      Format email valid
+                      {validation.emailValid ? 'Format email valid' : 'Format email tidak valid'}
                     </span>
                   </div>
                 )}
@@ -305,7 +317,7 @@ export default function RegisterPage() {
                     )}
                   </Button>
                 </div>
-                {formData.password && (
+                {touched.password && formData.password && (
                   <div className="flex items-center text-xs">
                     {validation.passwordLength ? (
                       <CheckCircle className="w-3 h-3 text-green-600 mr-1" />
@@ -313,7 +325,7 @@ export default function RegisterPage() {
                       <XCircle className="w-3 h-3 text-red-600 mr-1" />
                     )}
                     <span className={validation.passwordLength ? 'text-green-600' : 'text-red-600'}>
-                      Password minimal 6 karakter
+                      {validation.passwordLength ? 'Password valid' : 'Password minimal 6 karakter'}
                     </span>
                   </div>
                 )}
@@ -349,7 +361,7 @@ export default function RegisterPage() {
                     )}
                   </Button>
                 </div>
-                {formData.confirmPassword && (
+                {touched.confirmPassword && formData.confirmPassword && (
                   <div className="flex items-center text-xs">
                     {validation.passwordMatch ? (
                       <CheckCircle className="w-3 h-3 text-green-600 mr-1" />
@@ -357,7 +369,7 @@ export default function RegisterPage() {
                       <XCircle className="w-3 h-3 text-red-600 mr-1" />
                     )}
                     <span className={validation.passwordMatch ? 'text-green-600' : 'text-red-600'}>
-                      Password tidak cocok
+                      {validation.passwordMatch ? 'Password cocok' : 'Password tidak cocok'}
                     </span>
                   </div>
                 )}
