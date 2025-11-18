@@ -46,8 +46,16 @@ export default function StudentDashboard() {
   const [scanMessage, setScanMessage] = useState('')
   const [scanStatus, setScanStatus] = useState<'success' | 'error' | 'info'>('info')
   const [error, setError] = useState('')
+  const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
+    // Mark component as hydrated on client
+    setIsHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    // Only run on client after hydration
+    if (!isHydrated) return
     // Get student data from localStorage (set during login)
     const storedStudentData = localStorage.getItem('studentData')
     
@@ -149,6 +157,11 @@ export default function StudentDashboard() {
   }
 
   const stats = getStats()
+
+  // Prevent hydration mismatch by showing nothing during SSR
+  if (!isHydrated) {
+    return <div className="min-h-screen bg-gray-50" />
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

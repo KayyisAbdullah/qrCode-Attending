@@ -64,6 +64,7 @@ export default function AdminDashboard() {
   const [showQRDialog, setShowQRDialog] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [error, setError] = useState('')
+  const [isHydrated, setIsHydrated] = useState(false)
 
   // Form states for adding student
   const [newStudent, setNewStudent] = useState({
@@ -75,6 +76,14 @@ export default function AdminDashboard() {
   })
 
   useEffect(() => {
+    // Mark component as hydrated on client
+    setIsHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    // Only run on client after hydration
+    if (!isHydrated) return
+
     // Get admin data from localStorage
     const storedAdminData = localStorage.getItem('adminData')
     
@@ -165,6 +174,11 @@ export default function AdminDashboard() {
     todayAttendance: attendances.filter(a => a.date === new Date().toISOString().split('T')[0]).length,
     presentToday: attendances.filter(a => a.date === new Date().toISOString().split('T')[0] && a.status === 'hadir').length,
     classes: [...new Set(students.map(s => s.class))].length
+  }
+
+  // Prevent hydration mismatch by showing nothing during SSR
+  if (!isHydrated) {
+    return <div className="min-h-screen bg-gray-50" />
   }
 
   if (isLoading) {
