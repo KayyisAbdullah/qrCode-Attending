@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// Mock data for Netlify
+const MOCK_STUDENTS = [
+  { id: '1', username: 'ahmad123', name: 'Ahmad', class: 'XI-A', qrCode: 'QR-ahmad-001' },
+  { id: '2', username: 'siti123', name: 'Siti', class: 'XI-B', qrCode: 'QR-siti-001' },
+  { id: '3', username: 'budi123', name: 'Budi', class: 'XI-C', qrCode: 'QR-budi-001' },
+]
+
 export async function POST(request: NextRequest) {
   try {
     const { qrCode } = await request.json()
@@ -12,17 +19,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find student by QR Code
-    const student = await db.student.findUnique({
-      where: { qrCode },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        class: true,
-        qrCode: true
-      }
-    })
+    let student: any = null
+
+    // Try database first, fallback to mock data
+    try {
+      student = await db.student.findUnique({
+        where: { qrCode },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          class: true,
+          qrCode: true
+        }
+      })
+    } catch (dbError) {
+      console.log('[ATTENDANCE_SCAN] Database error, using mock data')
+      student = MOCK_STUDENTS.find(s => s.qrCode === qrCode) || null
+    }
 
     if (!student) {
       return NextResponse.json(

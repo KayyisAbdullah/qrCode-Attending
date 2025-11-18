@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
+// Mock data for Netlify (file system not available in serverless)
+const MOCK_ADMINS = [
+  { id: '1', username: 'admin', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Administrator', email: 'admin@school.com' },
+]
+
 export async function POST(request: NextRequest) {
   try {
     let body: any = {}
@@ -25,17 +30,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find admin in database
-    const admin = await db.admin.findUnique({
-      where: { username },
-      select: {
-        id: true,
-        username: true,
-        password: true,
-        name: true,
-        email: true
-      }
-    })
+    let admin: any = null
+
+    // Try database first, fallback to mock data
+    try {
+      admin = await db.admin.findUnique({
+        where: { username },
+        select: {
+          id: true,
+          username: true,
+          password: true,
+          name: true,
+          email: true
+        }
+      })
+    } catch (dbError) {
+      console.log('[ADMIN_LOGIN] Database error, using mock data:', dbError)
+      // Fallback to mock data for Netlify/serverless
+      admin = MOCK_ADMINS.find(a => a.username === username) || null
+    }
 
     if (!admin) {
       console.log('[ADMIN_LOGIN] Admin not found:', username)

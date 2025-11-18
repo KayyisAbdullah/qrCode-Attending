@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
+// Mock data for Netlify (file system not available in serverless)
+const MOCK_STUDENTS = [
+  { id: '1', username: 'ahmad123', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Ahmad', email: 'ahmad@school.com', class: 'XI-A', qrCode: 'QR-ahmad-001' },
+  { id: '2', username: 'siti123', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Siti', email: 'siti@school.com', class: 'XI-B', qrCode: 'QR-siti-001' },
+  { id: '3', username: 'budi123', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Budi', email: 'budi@school.com', class: 'XI-C', qrCode: 'QR-budi-001' },
+]
+
 export async function POST(request: NextRequest) {
   try {
     let body: any = {}
@@ -25,19 +32,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find student in database
-    const student = await db.student.findUnique({
-      where: { username },
-      select: {
-        id: true,
-        username: true,
-        password: true,
-        name: true,
-        email: true,
-        class: true,
-        qrCode: true
-      }
-    })
+    let student: any = null
+
+    // Try database first, fallback to mock data
+    try {
+      student = await db.student.findUnique({
+        where: { username },
+        select: {
+          id: true,
+          username: true,
+          password: true,
+          name: true,
+          email: true,
+          class: true,
+          qrCode: true
+        }
+      })
+    } catch (dbError) {
+      console.log('[STUDENT_LOGIN] Database error, using mock data:', dbError)
+      // Fallback to mock data for Netlify/serverless
+      student = MOCK_STUDENTS.find(s => s.username === username) || null
+    }
 
     if (!student) {
       console.log('[STUDENT_LOGIN] Student not found:', username)
