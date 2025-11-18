@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <defs>
+    <linearGradient id="student-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" fill="url(#student-grad)" rx="20"/>
+  <g transform="translate(24, 20)">
+    <!-- Person icon -->
+    <circle cx="12" cy="8" r="6" fill="#ffffff"/>
+    <path d="M 6 20 C 6 16 9 14 12 14 C 15 14 18 16 18 20 L 18 26 L 6 26 Z" fill="#ffffff"/>
+  </g>
+</svg>
