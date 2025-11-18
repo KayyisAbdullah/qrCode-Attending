@@ -26,7 +26,7 @@ export default function RegisterPage() {
   
   // Form states
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     class: '',
     password: '',
@@ -36,13 +36,15 @@ export default function RegisterPage() {
   const [validation, setValidation] = useState({
     passwordLength: false,
     passwordMatch: false,
-    emailValid: false
+    emailValid: false,
+    usernameValid: false
   })
 
   const [touched, setTouched] = useState({
     password: false,
     confirmPassword: false,
-    email: false
+    email: false,
+    username: false
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,10 +55,18 @@ export default function RegisterPage() {
     }))
 
     // Mark field as touched
-    if (name === 'password' || name === 'confirmPassword' || name === 'email') {
+    if (name === 'password' || name === 'confirmPassword' || name === 'email' || name === 'username') {
       setTouched(prev => ({
         ...prev,
         [name]: true
+      }))
+    }
+
+    // Real-time validation for username
+    if (name === 'username') {
+      setValidation(prev => ({
+        ...prev,
+        usernameValid: value.length >= 3
       }))
     }
 
@@ -92,6 +102,18 @@ export default function RegisterPage() {
     setSuccess('')
 
     // Validate form
+    if (!formData.username.trim()) {
+      setError('Username harus diisi')
+      setIsLoading(false)
+      return
+    }
+
+    if (formData.username.length < 3) {
+      setError('Username minimal 3 karakter')
+      setIsLoading(false)
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Password dan konfirmasi password tidak cocok')
       setIsLoading(false)
@@ -111,12 +133,6 @@ export default function RegisterPage() {
       return
     }
 
-    if (!formData.name.trim()) {
-      setError('Nama lengkap harus diisi')
-      setIsLoading(false)
-      return
-    }
-
     if (!formData.class.trim()) {
       setError('Kelas harus diisi')
       setIsLoading(false)
@@ -130,10 +146,10 @@ export default function RegisterPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name.trim(),
+          username: formData.username.trim(),
           email: formData.email.trim(),
           class: formData.class.trim(),
-          username: formData.email.split('@')[0], // Use email prefix as username
+          name: formData.username.trim(), // Use username as name
           password: formData.password
         }),
       })
@@ -143,7 +159,7 @@ export default function RegisterPage() {
       if (response.ok) {
         setSuccess('Registrasi berhasil! Silakan login dengan akun Anda.')
         setFormData({
-          name: '',
+          username: '',
           email: '',
           class: '',
           password: '',
@@ -152,12 +168,14 @@ export default function RegisterPage() {
         setValidation({
           passwordLength: false,
           passwordMatch: false,
-          emailValid: false
+          emailValid: false,
+          usernameValid: false
         })
         setTouched({
           password: false,
           confirmPassword: false,
-          email: false
+          email: false,
+          username: false
         })
         
         // Show success message then redirect
@@ -228,19 +246,31 @@ export default function RegisterPage() {
             
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-3">
-                <Label htmlFor="name" className="text-gray-700 font-medium text-sm">
-                  Nama Lengkap
+                <Label htmlFor="username" className="text-gray-700 font-medium text-sm">
+                  Username
                 </Label>
                 <Input
-                  id="name"
-                  name="name"
+                  id="username"
+                  name="username"
                   type="text"
-                  placeholder="Masukkan nama lengkap"
-                  value={formData.name}
+                  placeholder="Masukkan username"
+                  value={formData.username}
                   onChange={handleInputChange}
                   required
                   className="h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 />
+                {touched.username && formData.username && (
+                  <div className="flex items-center text-xs">
+                    {validation.usernameValid ? (
+                      <CheckCircle className="w-3 h-3 text-green-600 mr-1" />
+                    ) : (
+                      <XCircle className="w-3 h-3 text-red-600 mr-1" />
+                    )}
+                    <span className={validation.usernameValid ? 'text-green-600' : 'text-red-600'}>
+                      {validation.usernameValid ? 'Username valid' : 'Username minimal 3 karakter'}
+                    </span>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-3">
