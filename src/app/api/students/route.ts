@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { addMockStudent, studentExists, getAllMockStudents, mockStudentsDb } from '@/lib/mock-data'
 import bcrypt from 'bcryptjs'
-
-// Mock data storage for Netlify serverless (will reset on redeploy)
-let mockStudentsDb: any[] = [
-  { id: '1', username: 'ahmad123', password: '$2b$10$To6gsNtXX0qwKGtT85cIs.J9vSYJgXsjb5Asrbqv8ZSVGf7fUiI1', name: 'Ahmad', email: 'ahmad@school.com', class: 'XI-A', qrCode: 'QR-ahmad-001', createdAt: new Date() },
-  { id: '2', username: 'siti123', password: '$2b$10$To6gsNtXX0qwKGtT85cIs.J9vSYJgXsjb5Asrbqv8ZSVGf7fUiI1', name: 'Siti', email: 'siti@school.com', class: 'XI-B', qrCode: 'QR-siti-001', createdAt: new Date() },
-  { id: '3', username: 'budi123', password: '$2b$10$To6gsNtXX0qwKGtT85cIs.J9vSYJgXsjb5Asrbqv8ZSVGf7fUiI1', name: 'Budi', email: 'budi@school.com', class: 'XI-C', qrCode: 'QR-budi-001', createdAt: new Date() },
-]
 
 // GET all students
 export async function GET(request: NextRequest) {
@@ -52,10 +46,10 @@ export async function GET(request: NextRequest) {
       return response
 
     } catch (dbError) {
-      console.log('[GET_STUDENTS] Database error, using mock data:', dbError)
+      console.log('[GET_STUDENTS] Database error, using shared mock data:', dbError)
       
-      // Fallback to mock data for Netlify/serverless
-      let students = mockStudentsDb.map(s => ({
+      // Fallback to shared mock data for Netlify/serverless
+      let students = getAllMockStudents().map(s => ({
         id: s.id,
         username: s.username,
         name: s.name,
@@ -161,11 +155,10 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (dbError) {
-      console.log('[CREATE_STUDENT] Database error, using mock data:', dbError)
+      console.log('[CREATE_STUDENT] Database error, using shared mock data:', dbError)
       
-      // Fallback to mock data for Netlify/serverless
-      const existingMockStudent = mockStudentsDb.find(s => s.username === username || s.email === email)
-      if (existingMockStudent) {
+      // Fallback to shared mock data for Netlify/serverless
+      if (studentExists(username, email)) {
         return NextResponse.json(
           { message: 'Username atau email sudah digunakan', success: false },
           { status: 400 }
@@ -178,9 +171,10 @@ export async function POST(request: NextRequest) {
       // Generate unique QR code
       const qrCode = `QR${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
-      // Create mock student
+      // Create mock student with unique ID
+      const newId = Math.max(...mockStudentsDb.map(s => parseInt(s.id)), 0) + 1
       const newStudent = {
-        id: `${mockStudentsDb.length + 1}`,
+        id: `${newId}`,
         username,
         name,
         email,
@@ -190,7 +184,8 @@ export async function POST(request: NextRequest) {
         createdAt: new Date()
       }
 
-      mockStudentsDb.push(newStudent)
+      addMockStudent(newStudent)
+      console.log('[CREATE_STUDENT] New student added to mock database:', newStudent.username)
 
       const { password: _, ...studentData } = newStudent
 
