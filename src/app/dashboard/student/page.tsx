@@ -45,17 +45,33 @@ export default function StudentDashboard() {
   const [scanResult, setScanResult] = useState<string>('')
   const [scanMessage, setScanMessage] = useState('')
   const [scanStatus, setScanStatus] = useState<'success' | 'error' | 'info'>('info')
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    // Simulate fetching student data
-    const mockStudent: Student = {
-      id: '1',
-      name: 'Ahmad Rizki',
-      username: 'ahmad123',
-      class: 'X-A',
-      email: 'ahmad@email.com'
+    // Get student data from localStorage (set during login)
+    const storedStudentData = localStorage.getItem('studentData')
+    
+    if (!storedStudentData) {
+      // No student data found, redirect to login
+      console.warn('No student data found in localStorage, redirecting to login...')
+      window.location.href = '/login/student'
+      return
     }
 
+    try {
+      const studentData = JSON.parse(storedStudentData) as Student
+      setStudent(studentData)
+      console.log('Loaded student data from localStorage:', studentData.username)
+    } catch (err) {
+      console.error('Failed to parse student data:', err)
+      setError('Data siswa tidak valid. Silakan login kembali.')
+      setTimeout(() => {
+        window.location.href = '/login/student'
+      }, 2000)
+      return
+    }
+
+    // Mock attendance data (in production, this would come from an API)
     const mockAttendances: Attendance[] = [
       { id: '1', date: '2024-01-15', time: '07:30', status: 'hadir' },
       { id: '2', date: '2024-01-14', time: '07:45', status: 'terlambat' },
@@ -65,10 +81,9 @@ export default function StudentDashboard() {
     ]
 
     setTimeout(() => {
-      setStudent(mockStudent)
       setAttendances(mockAttendances)
       setIsLoading(false)
-    }, 1000)
+    }, 500)
   }, [])
 
   const handleScanQRCode = () => {
@@ -104,6 +119,7 @@ export default function StudentDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('studentToken')
+    localStorage.removeItem('studentData')
     window.location.href = '/'
   }
 
@@ -134,17 +150,6 @@ export default function StudentDashboard() {
 
   const stats = getStats()
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Memuat dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -157,7 +162,7 @@ export default function StudentDashboard() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <User className="w-4 h-4 text-gray-600" />
-                <span className="text-sm text-gray-600">{student?.name}</span>
+                <span className="text-sm text-gray-600">{student?.name || 'Loading...'}</span>
               </div>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
@@ -169,178 +174,201 @@ export default function StudentDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <Card className="mb-8">
+            <CardContent className="pt-6">
+              <p className="text-center text-gray-600">Memuat data siswa...</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Student Info Card */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <User className="w-5 h-5 mr-2" />
-              Informasi Siswa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">Nama Lengkap</p>
-                <p className="font-semibold">{student?.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Username</p>
-                <p className="font-semibold">{student?.username}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Kelas</p>
-                <p className="font-semibold">{student?.class}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Email</p>
-                <p className="font-semibold">{student?.email}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Absensi</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Hadir</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.hadir}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Terlambat</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.terlambat}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Izin</CardTitle>
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.izin}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sakit</CardTitle>
-              <XCircle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.sakit}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <Tabs defaultValue="scan" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="scan">Scan QR Code</TabsTrigger>
-            <TabsTrigger value="history">Riwayat Absensi</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="scan" className="space-y-4">
-            <Card>
+        {!isLoading && student && (
+          <>
+            <Card className="mb-8">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <QrCode className="w-5 h-5 mr-2" />
-                  Absensi dengan QR Code
+                  <User className="w-5 h-5 mr-2" />
+                  Informasi Siswa
                 </CardTitle>
-                <CardDescription>
-                  Scan QR Code yang disediakan untuk melakukan absensi
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-center space-y-6">
-                <div className="mx-auto w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <QrCode className="w-24 h-24 text-gray-400" />
-                </div>
-                
-                <div className="space-y-4">
-                  <p className="text-gray-600">
-                    Klik tombol di bawah untuk memulai pemindaian QR Code
-                  </p>
-                  
-                  <Button 
-                    onClick={handleScanQRCode}
-                    className="bg-blue-600 hover:bg-blue-700"
-                    size="lg"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Scan QR Code
-                  </Button>
-                </div>
-
-                {scanResult && (
-                  <Alert className={scanStatus === 'success' ? 'border-green-200 bg-green-50' : scanStatus === 'error' ? 'border-red-200 bg-red-50' : 'border-blue-200 bg-blue-50'}>
-                    <AlertDescription className={scanStatus === 'success' ? 'text-green-800' : scanStatus === 'error' ? 'text-red-800' : 'text-blue-800'}>
-                      {scanMessage}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <History className="w-5 h-5 mr-2" />
-                  Riwayat Absensi
-                </CardTitle>
-                <CardDescription>
-                  Lihat riwayat kehadiran Anda
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Waktu</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Keterangan</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {attendances.map((attendance) => (
-                      <TableRow key={attendance.id}>
-                        <TableCell className="font-medium">{attendance.date}</TableCell>
-                        <TableCell>{attendance.time}</TableCell>
-                        <TableCell>
-                          {getStatusBadge(attendance.status)}
-                        </TableCell>
-                        <TableCell>
-                          {attendance.description || '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Nama Lengkap</p>
+                    <p className="font-semibold">{student?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Username</p>
+                    <p className="font-semibold">{student?.username}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Kelas</p>
+                    <p className="font-semibold">{student?.class}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-semibold">{student?.email}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Absensi</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.total}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Hadir</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{stats.hadir}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Terlambat</CardTitle>
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">{stats.terlambat}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Izin</CardTitle>
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{stats.izin}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Sakit</CardTitle>
+                  <XCircle className="h-4 w-4 text-red-600" />
+                </CardHeader>
+                    <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{stats.sakit}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Main Content */}
+            <Tabs defaultValue="scan" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="scan">Scan QR Code</TabsTrigger>
+                <TabsTrigger value="history">Riwayat Absensi</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="scan" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <QrCode className="w-5 h-5 mr-2" />
+                      Absensi dengan QR Code
+                    </CardTitle>
+                    <CardDescription>
+                      Scan QR Code yang disediakan untuk melakukan absensi
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-center space-y-6">
+                    <div className="mx-auto w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <QrCode className="w-24 h-24 text-gray-400" />
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <p className="text-gray-600">
+                        Klik tombol di bawah untuk memulai pemindaian QR Code
+                      </p>
+                      
+                      <Button 
+                        onClick={handleScanQRCode}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        size="lg"
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Scan QR Code
+                      </Button>
+                    </div>
+
+                    {scanResult && (
+                      <Alert className={scanStatus === 'success' ? 'border-green-200 bg-green-50' : scanStatus === 'error' ? 'border-red-200 bg-red-50' : 'border-blue-200 bg-blue-50'}>
+                        <AlertDescription className={scanStatus === 'success' ? 'text-green-800' : scanStatus === 'error' ? 'text-red-800' : 'text-blue-800'}>
+                          {scanMessage}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="history" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <History className="w-5 h-5 mr-2" />
+                      Riwayat Absensi
+                    </CardTitle>
+                    <CardDescription>
+                      Lihat riwayat kehadiran Anda
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Waktu</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Keterangan</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {attendances.map((attendance) => (
+                          <TableRow key={attendance.id}>
+                            <TableCell className="font-medium">{attendance.date}</TableCell>
+                            <TableCell>{attendance.time}</TableCell>
+                            <TableCell>
+                              {getStatusBadge(attendance.status)}
+                            </TableCell>
+                            <TableCell>
+                              {attendance.description || '-'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </main>
 
       {/* Scanner Dialog */}

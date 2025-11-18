@@ -45,7 +45,15 @@ interface Attendance {
   status: 'hadir' | 'izin' | 'sakit'
 }
 
+interface Admin {
+  id: string
+  name: string
+  username: string
+  email: string
+}
+
 export default function AdminDashboard() {
+  const [admin, setAdmin] = useState<Admin | null>(null)
   const [students, setStudents] = useState<Student[]>([])
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -55,6 +63,7 @@ export default function AdminDashboard() {
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false)
   const [showQRDialog, setShowQRDialog] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [error, setError] = useState('')
 
   // Form states for adding student
   const [newStudent, setNewStudent] = useState({
@@ -66,7 +75,29 @@ export default function AdminDashboard() {
   })
 
   useEffect(() => {
-    // Simulate fetching data
+    // Get admin data from localStorage
+    const storedAdminData = localStorage.getItem('adminData')
+    
+    if (!storedAdminData) {
+      console.warn('No admin data found, redirecting to login...')
+      window.location.href = '/login/admin'
+      return
+    }
+
+    try {
+      const adminData = JSON.parse(storedAdminData) as Admin
+      setAdmin(adminData)
+      console.log('Loaded admin data from localStorage:', adminData.username)
+    } catch (err) {
+      console.error('Failed to parse admin data:', err)
+      setError('Data admin tidak valid. Silakan login kembali.')
+      setTimeout(() => {
+        window.location.href = '/login/admin'
+      }, 2000)
+      return
+    }
+
+    // Simulate fetching student and attendance data
     const mockStudents: Student[] = [
       { id: '1', name: 'Ahmad Rizki', username: 'ahmad123', email: 'ahmad@email.com', class: 'X-A', qrCode: 'QR001' },
       { id: '2', name: 'Siti Nurhaliza', username: 'siti123', email: 'siti@email.com', class: 'X-B', qrCode: 'QR002' },
@@ -83,7 +114,7 @@ export default function AdminDashboard() {
       setStudents(mockStudents)
       setAttendances(mockAttendances)
       setIsLoading(false)
-    }, 1000)
+    }, 500)
   }, [])
 
   const handleAddStudent = async (e: React.FormEvent) => {
@@ -113,6 +144,7 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken')
+    localStorage.removeItem('adminData')
     window.location.href = '/'
   }
 
