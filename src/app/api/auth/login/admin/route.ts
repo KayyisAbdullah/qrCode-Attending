@@ -3,8 +3,9 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 // Mock data for Netlify (file system not available in serverless)
+// Password: admin123
 const MOCK_ADMINS = [
-  { id: '1', username: 'admin', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Administrator', email: 'admin@school.com' },
+  { id: '1', username: 'admin', password: '$2b$10$yIUqnw6JOTbctCWSwDagxOvIrof8EGACQxb9GO6wMDMQ9tWieCYN', name: 'Administrator', email: 'admin@school.com' },
 ]
 
 export async function POST(request: NextRequest) {

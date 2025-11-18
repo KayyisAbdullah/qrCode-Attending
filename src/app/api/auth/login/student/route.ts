@@ -3,10 +3,11 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 // Mock data for Netlify (file system not available in serverless)
+// Passwords: ahmad123, siti123, budi123
 const MOCK_STUDENTS = [
-  { id: '1', username: 'ahmad123', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Ahmad', email: 'ahmad@school.com', class: 'XI-A', qrCode: 'QR-ahmad-001' },
-  { id: '2', username: 'siti123', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Siti', email: 'siti@school.com', class: 'XI-B', qrCode: 'QR-siti-001' },
-  { id: '3', username: 'budi123', password: '$2a$10$8qvvP.d3CZaZdXuDUIuveOvGLqS4fWI5ydNuNpkWaL2g6r4PdJTCi', name: 'Budi', email: 'budi@school.com', class: 'XI-C', qrCode: 'QR-budi-001' },
+  { id: '1', username: 'ahmad123', password: '$2b$10$To6gsNtXX0qwKGtT85cIs.J9vSYJgXsjb5Asrbqv8ZSVGf7fUiI1', name: 'Ahmad', email: 'ahmad@school.com', class: 'XI-A', qrCode: 'QR-ahmad-001' },
+  { id: '2', username: 'siti123', password: '$2b$10$To6gsNtXX0qwKGtT85cIs.J9vSYJgXsjb5Asrbqv8ZSVGf7fUiI1', name: 'Siti', email: 'siti@school.com', class: 'XI-B', qrCode: 'QR-siti-001' },
+  { id: '3', username: 'budi123', password: '$2b$10$To6gsNtXX0qwKGtT85cIs.J9vSYJgXsjb5Asrbqv8ZSVGf7fUiI1', name: 'Budi', email: 'budi@school.com', class: 'XI-C', qrCode: 'QR-budi-001' },
 ]
 
 export async function POST(request: NextRequest) {
