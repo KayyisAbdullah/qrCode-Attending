@@ -76,24 +76,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Determine attendance status based on time
+    // Determine attendance status based on WIB time
     const now = new Date()
-    const currentTime = now.toLocaleTimeString('id-ID', { 
+    // Convert to WIB (UTC+7)
+    const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+    const currentTime = wibTime.toLocaleTimeString('id-ID', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: false 
     })
-    const currentHour = now.getHours()
-    const currentMinute = now.getMinutes()
+    const currentHour = wibTime.getHours()
+    const currentMinute = wibTime.getMinutes()
     
-    // Set status based on time
+    // Set status based on WIB time
     // Sebelum jam 7:00 -> HADIR
     // Jam 7:00 - 7:59 -> HADIR  
     // Jam 8:00 ke atas -> TERLAMBAT
     let status = 'HADIR'
-    if (currentHour >= 8 || (currentHour === 7 && currentMinute >= 60)) {
+    if (currentHour >= 8) {
       status = 'TERLAMBAT'
     }
+    
+    console.log(`[VERIFY_API] WIB Time: ${currentTime} (${currentHour}:${currentMinute}) -> Status: ${status}`)
 
     // Create attendance record
     const attendance = await db.attendance.create({

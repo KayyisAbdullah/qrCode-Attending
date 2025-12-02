@@ -38,9 +38,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if already attended today
-    const today = new Date()
-    const todayString = today.toISOString().split('T')[0]
+    // Check if already attended today (WIB timezone)
+    const now = new Date()
+    const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+    const todayString = wibTime.toISOString().split('T')[0]
     
     const existingAttendance = await db.attendance.findFirst({
       where: {
@@ -103,17 +104,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create attendance record
+    // Create attendance record with WIB time
+    const currentTime = wibTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+    
     const attendance = await db.attendance.create({
       data: {
         studentId: studentId,
         date: todayString,
-        time: today.toLocaleTimeString('en-US', { hour12: false }),
+        time: currentTime,
         status: status as Status,
         notes: notes || `Pengajuan ${status}`,
         proofFile: proofFileUrl
       }
     })
+    
+    console.log(`[REQUEST_API] ${status} created for ${student.name} at ${currentTime} WIB`)
 
     return NextResponse.json({
       message: `Berhasil mengajukan ${status}`,

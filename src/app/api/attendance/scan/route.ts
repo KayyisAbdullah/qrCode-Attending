@@ -210,29 +210,33 @@ export async function POST(request: NextRequest) {
         // Lanjut ke pembuatan data baru di bawah...
       }
 
-      // Create new attendance record
+      // Create new attendance record with WIB timezone
       const now = new Date()
-      const currentHour = now.getHours()
-      const currentMinute = now.getMinutes()
+      // Convert to WIB (UTC+7)
+      const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+      const currentHour = wibTime.getHours()
+      const currentMinute = wibTime.getMinutes()
+      const formattedTime = wibTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+      const formattedDate = wibTime.toISOString().split('T')[0]
       
-      // --- PENGATURAN JAM MASUK ---
+      // --- PENGATURAN JAM MASUK (WIB) ---
       // Aturan:
       // Sebelum jam 7:00 (00:00 - 06:59) -> HADIR
       // Jam 7:00 - 7:59 -> HADIR
       // Jam 8:00 ke atas -> TERLAMBAT
       
       let status: Status = Status.HADIR
-      if (currentHour >= 8 || (currentHour === 7 && currentMinute >= 60)) {
+      if (currentHour >= 8) {
         status = Status.TERLAMBAT
       }
       
-      console.log(`[SCAN_API] Time check: ${currentHour}:${currentMinute} -> Status: ${status}`)
+      console.log(`[SCAN_API] WIB Time: ${formattedTime} (${currentHour}:${currentMinute}) -> Status: ${status}`)
       
       attendanceRecord = await db.attendance.create({
         data: {
           studentId: student.id,
-          date: todayString,
-          time: now.toLocaleTimeString('en-US', { hour12: false }),
+          date: formattedDate,
+          time: formattedTime,
           status: status,
           qrCode: qrCode
         }

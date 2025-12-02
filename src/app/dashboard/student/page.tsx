@@ -217,7 +217,7 @@ export default function StudentDashboard() {
   const handleRequestSubmit = async () => {
     if (!student) return
     if (!requestNotes.trim()) {
-      alert('Mohon isi keterangan')
+      toast.error('Mohon isi keterangan')
       return
     }
 
@@ -242,14 +242,16 @@ export default function StudentDashboard() {
         setIsRequestOpen(false)
         setRequestNotes('')
         setRequestFile(null)
-        fetchAttendance(student.id)
-        alert('Pengajuan berhasil dikirim')
+        setRequestType('IZIN')
+        // Refresh attendance data
+        await fetchAttendance(student.id)
+        toast.success('✅ Pengajuan ' + requestType + ' berhasil dikirim!')
       } else {
-        alert(data.message || 'Gagal mengirim pengajuan')
+        toast.error(data.message || 'Gagal mengirim pengajuan')
       }
     } catch (error) {
       console.error('Error submitting request:', error)
-      alert('Terjadi kesalahan saat mengirim pengajuan')
+      toast.error('Terjadi kesalahan saat mengirim pengajuan')
     } finally {
       setIsSubmitting(false)
     }

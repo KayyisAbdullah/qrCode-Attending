@@ -348,10 +348,16 @@ export default function AdminDashboard() {
     })
   }, [attendances, filterDate])
 
-  const todayDate = useMemo(() => new Date().toISOString().split('T')[0], [])
+  const todayDate = useMemo(() => {
+    // Use WIB timezone for today's date
+    const now = new Date()
+    const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+    return wibTime.toISOString().split('T')[0]
+  }, [])
   
   const stats = useMemo(() => {
     const today = attendances.filter(a => a.date === todayDate)
+    console.log('[ADMIN_DASHBOARD] Today WIB:', todayDate, 'Total today:', today.length)
     return {
       totalStudents: students.length,
       presentToday: today.filter(a => a.status?.toUpperCase() === 'HADIR').length,
