@@ -48,6 +48,7 @@ import {
   Cell,
   Legend
 } from 'recharts'
+import { toast } from 'sonner'
 
 interface Attendance {
   id: string
@@ -147,7 +148,13 @@ export default function StudentDashboard() {
       const response = await fetch(`/api/attendance?studentId=${studentId}`)
       if (response.ok) {
         const data = await response.json()
-        setAttendances(data)
+        // Normalize status to lowercase untuk consistency dengan visualisasi
+        const normalizedData = data.map((att: any) => ({
+          ...att,
+          status: att.status.toLowerCase()
+        }))
+        setAttendances(normalizedData)
+        console.log('[STUDENT] Loaded attendances:', normalizedData.length)
       } else {
         console.error('Failed to fetch attendance')
       }
