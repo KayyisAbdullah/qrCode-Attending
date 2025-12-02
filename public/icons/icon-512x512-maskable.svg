@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <path id="qr-shape2" d="M0 0 H512 V512 H0 Z"/>
+    <mask id="maskable-mask2">
+      <circle cx="256" cy="256" r="220" fill="white"/>
+    </mask>
+  </defs>
+  <g mask="url(#maskable-mask2)">
+    <defs>
+      <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <rect width="512" height="512" fill="url(#grad4)"/>
+    <g transform="translate(80, 80)">
+      <rect x="0" y="0" width="352" height="352" fill="#ffffff" rx="30"/>
+      <rect x="30" y="30" width="80" height="80" fill="none" stroke="#2563eb" stroke-width="12"/>
+      <rect x="42" y="42" width="56" height="56" fill="#2563eb"/>
+      <rect x="242" y="30" width="80" height="80" fill="none" stroke="#2563eb" stroke-width="12"/>
+      <rect x="254" y="42" width="56" height="56" fill="#2563eb"/>
+      <rect x="30" y="242" width="80" height="80" fill="none" stroke="#2563eb" stroke-width="12"/>
+      <rect x="42" y="254" width="56" height="56" fill="#2563eb"/>
+      <rect x="138" y="138" width="76" height="76" fill="#2563eb"/>
+      <rect x="154" y="154" width="44" height="44" fill="#ffffff"/>
+      <rect x="110" y="110" width="28" height="28" fill="#2563eb"/>
+      <rect x="254" y="170" width="28" height="28" fill="#2563eb"/>
+      <rect x="170" y="254" width="28" height="28" fill="#2563eb"/>
+    </g>
+    <g transform="translate(368, 368)">
+      <circle cx="0" cy="0" r="60" fill="#4ade80"/>
+      <path d="M-30 0 L-8 22 L20 -10" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
