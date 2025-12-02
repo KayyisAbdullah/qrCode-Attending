@@ -216,15 +216,17 @@ export async function POST(request: NextRequest) {
       const currentMinute = now.getMinutes()
       
       // --- PENGATURAN JAM MASUK ---
-      // Aturan Baru:
-      // Sebelum jam 7 (00:00 - 06:59) -> HADIR
-      // Jam 7 sampai selesai (07:00 - 07:59) -> HADIR
-      // Jam 8 ke atas (08:00 dst) -> TERLAMBAT
+      // Aturan:
+      // Sebelum jam 7:00 (00:00 - 06:59) -> HADIR
+      // Jam 7:00 - 7:59 -> HADIR
+      // Jam 8:00 ke atas -> TERLAMBAT
       
       let status: Status = Status.HADIR
-      if (currentHour >= 8) {
+      if (currentHour >= 8 || (currentHour === 7 && currentMinute >= 60)) {
         status = Status.TERLAMBAT
       }
+      
+      console.log(`[SCAN_API] Time check: ${currentHour}:${currentMinute} -> Status: ${status}`)
       
       attendanceRecord = await db.attendance.create({
         data: {

@@ -733,11 +733,11 @@ export default function AdminDashboard() {
                         <TableCell>{attendance.time}</TableCell>
                         <TableCell>
                           <Badge 
-                            variant={attendance.status === 'hadir' ? 'default' : attendance.status === 'terlambat' ? 'secondary' : 'destructive'}
+                            variant={attendance.status.toLowerCase() === 'hadir' ? 'default' : attendance.status.toLowerCase() === 'terlambat' ? 'secondary' : 'destructive'}
                             className={
-                              attendance.status === 'hadir' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                              attendance.status === 'terlambat' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
-                              attendance.status === 'izin' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                              attendance.status.toLowerCase() === 'hadir' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                              attendance.status.toLowerCase() === 'terlambat' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
+                              attendance.status.toLowerCase() === 'izin' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
                               'bg-red-100 text-red-800 hover:bg-red-200'
                             }
                           >

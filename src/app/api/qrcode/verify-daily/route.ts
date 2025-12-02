@@ -84,10 +84,14 @@ export async function POST(request: NextRequest) {
       hour12: false 
     })
     const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
     
-    // Set status based on time (adjust as needed)
+    // Set status based on time
+    // Sebelum jam 7:00 -> HADIR
+    // Jam 7:00 - 7:59 -> HADIR  
+    // Jam 8:00 ke atas -> TERLAMBAT
     let status = 'HADIR'
-    if (currentHour >= 8) { // Late if after 8 AM
+    if (currentHour >= 8 || (currentHour === 7 && currentMinute >= 60)) {
       status = 'TERLAMBAT'
     }
 

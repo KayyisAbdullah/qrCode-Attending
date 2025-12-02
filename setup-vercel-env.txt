@@ -1,0 +1,73 @@
+=== INFORMASI PENTING UNTUK VERCEL ===
+
+Anda perlu set 3 Environment Variables di Vercel Dashboard:
+
+1. DATABASE_URL
+   Value: postgresql://neondb_owner:npg_6h0CEsHloqNQ@ep-solitary-glitter-a1koykqd.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+
+2. NEXTAUTH_SECRET
+   Value: 060B6NK/EzJZa0OrCDib5YQJG/VpkPT0VT8ffsTvlPY=
+
+3. NEXTAUTH_URL
+   Value: https://qr-barcode-attending.vercel.app
+
+=== CARA SET ENVIRONMENT VARIABLES ===
+
+OPSI 1: Via Vercel Dashboard (LEBIH MUDAH)
+-----------------------------------------
+1. Buka: https://vercel.com/kayyisabdullahs-projects/qr-barcode-attending/settings/environment-variables
+
+2. Tambahkan 3 variables di atas satu per satu:
+   - Klik "Add New"
+   - Paste Name (contoh: DATABASE_URL)
+   - Paste Value
+   - Pilih Environment: Production, Preview, Development (centang semua)
+   - Klik "Save"
+
+3. Setelah semua di-set, klik tab "Deployments"
+
+4. Klik "Redeploy" pada deployment terakhir
+
+
+OPSI 2: Via Command Line (Manual)
+----------------------------------
+Jalankan command ini satu per satu di terminal:
+
+# Set DATABASE_URL
+vercel env add DATABASE_URL production
+# Paste value: postgresql://neondb_owner:npg_6h0CEsHloqNQ@ep-solitary-glitter-a1koykqd.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+
+vercel env add DATABASE_URL preview
+# Paste value yang sama
+
+vercel env add DATABASE_URL development
+# Paste value yang sama
+
+# Set NEXTAUTH_SECRET
+vercel env add NEXTAUTH_SECRET production
+# Paste value: 060B6NK/EzJZa0OrCDib5YQJG/VpkPT0VT8ffsTvlPY=
+
+vercel env add NEXTAUTH_SECRET preview
+# Paste value yang sama
+
+vercel env add NEXTAUTH_SECRET development
+# Paste value yang sama
+
+# Set NEXTAUTH_URL
+vercel env add NEXTAUTH_URL production
+# Paste value: https://qr-barcode-attending.vercel.app
+
+vercel env add NEXTAUTH_URL preview
+# Paste value yang sama
+
+vercel env add NEXTAUTH_URL development
+# Paste value yang sama
+
+# Deploy ke production
+vercel --prod
+
+
+=== SETELAH ENVIRONMENT VARIABLES DI-SET ===
+
+Jalankan command ini untuk deploy:
+vercel --prod
