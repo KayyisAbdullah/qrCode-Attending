@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Handle File Upload
+    // Handle File Upload - Simplified for Vercel serverless
     let proofFileUrl: string | null = null
-    if (file) {
+    if (file && file.size > 0) {
       // Validate file type
       const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
       if (!validTypes.includes(file.type)) {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Validate file size (e.g., max 5MB)
+      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         return NextResponse.json(
           { message: 'Ukuran file terlalu besar (Maksimal 5MB)', success: false },
@@ -77,31 +77,9 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      try {
-        const bytes = await file.arrayBuffer()
-        const buffer = Buffer.from(bytes)
-        
-        // Create unique filename
-        // Sanitize extension
-        const originalName = file.name || 'unknown'
-        const ext = originalName.split('.').pop() || 'bin'
-        const filename = `proof-${studentId}-${Date.now()}.${ext}`
-        
-        // Ensure directory exists (optional, but good practice if not created manually)
-        // For now assuming public/uploads exists as created in previous step
-        
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-        const filepath = path.join(uploadDir, filename)
-        
-        await writeFile(filepath, buffer)
-        proofFileUrl = `/uploads/${filename}`
-      } catch (uploadError) {
-        console.error('Upload error:', uploadError)
-        return NextResponse.json(
-          { message: 'Gagal mengupload file bukti', success: false },
-          { status: 500 }
-        )
-      }
+      // For now, just store filename (in production, upload to cloud storage like Vercel Blob)
+      proofFileUrl = `proof-${studentId}-${Date.now()}-${file.name}`
+      console.log('[REQUEST_API] File would be uploaded:', proofFileUrl)
     }
 
     // Create attendance record with WIB time
