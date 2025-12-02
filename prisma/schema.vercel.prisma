@@ -1,0 +1,63 @@
+// Prisma schema untuk Vercel dengan PostgreSQL
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  attendances Attendance[]
+}
+
+model Student {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  email     String   @unique
+  name      String
+  class     String
+  qrCode    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  attendances Attendance[]
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  studentId String
+  adminId   String?
+  date      String   // Format: YYYY-MM-DD
+  time      String   // Format: HH:MM
+  status    Status   @default(HADIR)
+  notes     String?
+  proofFile String?  // Path to uploaded proof file (image/pdf)
+  qrCode    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  admin   Admin?   @relation(fields: [adminId], references: [id])
+}
+
+enum Status {
+  HADIR
+  TERLAMBAT
+  IZIN
+  SAKIT
+}
