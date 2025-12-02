@@ -79,10 +79,17 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
 
-      // Determine status based on time
+      // Determine status based on time (WIB = UTC+7)
       const now = new Date()
-      const currentTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
-      const currentHour = now.getHours()
+      const utcTime = now.getTime()
+      const wibOffset = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
+      const wibTime = new Date(utcTime + wibOffset)
+      
+      const currentHour = wibTime.getUTCHours()
+      const currentMinute = wibTime.getUTCMinutes()
+      const currentTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`
+      
+      console.log(`[SCAN_API] UTC: ${now.toISOString()}, WIB: ${currentHour}:${String(currentMinute).padStart(2, '0')}`)
       
       let status: Status = Status.HADIR
       if (currentHour >= 8) {
@@ -210,27 +217,28 @@ export async function POST(request: NextRequest) {
         // Lanjut ke pembuatan data baru di bawah...
       }
 
-      // Create new attendance record with WIB timezone
+      // Create new attendance record with WIB timezone (UTC+7)
       const now = new Date()
-      // Convert to WIB (UTC+7)
-      const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
-      const currentHour = wibTime.getHours()
-      const currentMinute = wibTime.getMinutes()
-      const formattedTime = wibTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+      const utcTime = now.getTime()
+      const wibOffset = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
+      const wibTime = new Date(utcTime + wibOffset)
+      
+      const currentHour = wibTime.getUTCHours()
+      const currentMinute = wibTime.getUTCMinutes()
+      const formattedTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`
       const formattedDate = wibTime.toISOString().split('T')[0]
       
       // --- PENGATURAN JAM MASUK (WIB) ---
       // Aturan:
-      // Sebelum jam 7:00 (00:00 - 06:59) -> HADIR
-      // Jam 7:00 - 7:59 -> HADIR
-      // Jam 8:00 ke atas -> TERLAMBAT
+      // Sebelum jam 8:00 (00:00 - 07:59) -> HADIR
+      // Jam 8:00 ke atas (08:00 - 23:59) -> TERLAMBAT
       
       let status: Status = Status.HADIR
       if (currentHour >= 8) {
         status = Status.TERLAMBAT
       }
       
-      console.log(`[SCAN_API] WIB Time: ${formattedTime} (${currentHour}:${currentMinute}) -> Status: ${status}`)
+      console.log(`[SCAN_API] UTC: ${now.toISOString()}, WIB: ${formattedTime} (${currentHour}:${currentMinute}) -> Status: ${status}`)
       
       attendanceRecord = await db.attendance.create({
         data: {

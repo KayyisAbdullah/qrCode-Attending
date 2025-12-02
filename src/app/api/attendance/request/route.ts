@@ -38,10 +38,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if already attended today (WIB timezone)
+    // Check if already attended today (WIB timezone = UTC+7)
     const now = new Date()
-    const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+    const utcTime = now.getTime()
+    const wibOffset = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
+    const wibTime = new Date(utcTime + wibOffset)
+    
     const todayString = wibTime.toISOString().split('T')[0]
+    const currentHour = wibTime.getUTCHours()
+    const currentMinute = wibTime.getUTCMinutes()
+    const currentTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`
+    
+    console.log(`[REQUEST_API] UTC: ${now.toISOString()}, WIB: ${currentTime}`)
     
     const existingAttendance = await db.attendance.findFirst({
       where: {
@@ -83,7 +91,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Create attendance record with WIB time
-    const currentTime = wibTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
     
     const attendance = await db.attendance.create({
       data: {
