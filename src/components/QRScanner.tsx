@@ -81,7 +81,7 @@ export default function QRScanner({ student }: QRScannerProps) {
   }, [])
 
   // Start camera dengan error handling yang lebih baik
-  // Start camera dengan error handling yang lebih baik
+  // Start camera dengan error handling yang lebih baik untuk mobile
   const startCamera = async () => {
     setState('requesting')
     setError('')
@@ -90,6 +90,7 @@ export default function QRScanner({ student }: QRScannerProps) {
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Browser tidak mendukung akses kamera')
       }
 
       // Stop stream sebelumnya jika ada
@@ -97,45 +98,56 @@ export default function QRScanner({ student }: QRScannerProps) {
 
       let stream: MediaStream | null = null
 
+      // Detect mobile untuk constraint yang lebih tepat
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      
       try {
-        // Coba dengan facingMode yang diminta dengan resolusi optimal untuk scanning layar HP
-        console.log(`Requesting camera (${facingMode})...`)
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode,
-            width: { ideal: 1920, max: 3840 },
-            height: { ideal: 1080, max: 2160 },
-            // Setting tambahan untuk kualitas lebih baik
-            aspectRatio: { ideal: 16/9 },
-            frameRate: { ideal: 30, max: 60 }
-          } 
-        })
-      } catch (err) {
-        console.warn('High-res camera config failed, trying standard...', err)
-        try {
-          // Coba dengan resolusi standar
+        // Mobile: prioritas environment (back camera) dengan constraint lebih simple
+        if (isMobile) {
+          console.log(`Requesting MOBILE camera (${facingMode})...`)
           stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
-              facingMode,
+              facingMode: { ideal: facingMode },
+              // Mobile lebih baik dengan constraint minimal
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
+            audio: false
+          })
+        } else {
+          // Desktop: resolusi tinggi OK
+          console.log(`Requesting DESKTOP camera...`)
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
               width: { ideal: 1920 },
               height: { ideal: 1080 },
               frameRate: { ideal: 30 }
-            } 
+            },
+            audio: false
+          })
+        }
+      } catch (err) {
+        console.warn('First camera attempt failed, trying fallback...', err)
+        try {
+          // Fallback: simple constraint untuk compatibility
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: facingMode },
+            audio: false
           })
         } catch (err2) {
-          console.warn('Standard camera config failed, trying fallback...', err2)
-          // Fallback: coba kamera apapun yang tersedia
+          console.warn('Second attempt failed, trying any camera...', err2)
+          // Last resort: any available camera
           stream = await navigator.mediaDevices.getUserMedia({ 
-            video: true 
+            video: true,
+            audio: false
           })
-          // Jika fallback berhasil (biasanya webcam laptop), anggap sebagai user facing agar dimirror
-          setFacingMode('user')
         }
       }
 
       if (!stream) throw new Error('Gagal mendapatkan stream kamera')
 
       streamRef.current = stream
+      console.log('Camera stream obtained:', stream.getVideoTracks()[0].getSettings())
       
       // Check if torch/flash is supported
       const track = stream.getVideoTracks()[0]
@@ -148,25 +160,41 @@ export default function QRScanner({ student }: QRScannerProps) {
         setTorchEnabled(false)
       }
       
-      // Langsung set state ke scanning agar video element ter-render
-      // Video akan di-handle oleh onVideoRef
+      // Set state ke scanning agar video element ter-render
       setState('scanning')
       
-      // Mulai loop scanning
-      startScanning()
+      // CRITICAL: Wait for video element to be ready before starting scan
+      // Di mobile, video element butuh waktu untuk ready
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      // Ensure video is playing
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        try {
+          await videoRef.current.play()
+          console.log('Video playing successfully')
+        } catch (playErr) {
+          console.warn('Video play failed, user interaction may be required:', playErr)
+        }
+      }
+      
+      // Mulai loop scanning setelah video ready
+      await startScanning()
 
     } catch (err: any) {
       console.error('Camera error:', err)
       let errorMsg = 'Gagal mengakses kamera'
       
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errorMsg = 'Izin kamera ditolak. Mohon izinkan akses kamera di browser Anda.'
+        errorMsg = 'Izin kamera ditolak. Mohon izinkan akses kamera di pengaturan browser Anda.'
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         errorMsg = 'Kamera tidak ditemukan pada perangkat ini.'
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorMsg = 'Kamera sedang digunakan oleh aplikasi lain.'
+        errorMsg = 'Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi lain dan coba lagi.'
       } else if (err.name === 'OverconstrainedError') {
-        errorMsg = 'Kamera tidak mendukung resolusi yang diminta.'
+        errorMsg = 'Kamera tidak mendukung konfigurasi yang diminta. Coba ganti kamera.'
+      } else if (err.message) {
+        errorMsg = err.message
       }
       
       setError(errorMsg)
@@ -175,23 +203,44 @@ export default function QRScanner({ student }: QRScannerProps) {
     }
   }
 
-  // Scanning loop dengan optimasi deteksi
+  // Scanning loop dengan optimasi deteksi untuk mobile
   const startScanning = async () => {
-    if (!videoRef.current || !canvasRef.current) return
+    // Wait for refs to be ready
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    if (!videoRef.current || !canvasRef.current) {
+      console.warn('Video or canvas ref not ready, retrying...')
+      setTimeout(() => startScanning(), 500)
+      return
+    }
 
     const video = videoRef.current
     const canvas = canvasRef.current
     const context = canvas.getContext('2d', { willReadFrequently: true })
 
-    if (!context) return
+    if (!context) {
+      console.error('Cannot get canvas context')
+      return
+    }
+
+    // Wait for video to have data
+    if (video.readyState < video.HAVE_ENOUGH_DATA) {
+      console.log('Waiting for video to load...')
+      video.addEventListener('loadeddata', () => {
+        console.log('Video data loaded, starting scan')
+        startScanning()
+      }, { once: true })
+      return
+    }
 
     scanningRef.current = true
+    console.log('Scanning loop started')
 
     // Import jsQR secara dinamis
     const jsQR = (await import('jsqr')).default
 
     let lastScanTime = 0
-    const scanInterval = 150 // 150ms untuk balance processing time dengan detection
+    const scanInterval = 200 // 200ms untuk mobile (lebih lambat tapi lebih stabil)
 
     const scan = () => {
       if (!scanningRef.current) return
@@ -481,6 +530,12 @@ export default function QRScanner({ student }: QRScannerProps) {
                 height: '100%',
                 objectFit: 'cover',
                 transform: 'none'
+              }}
+              onClick={() => {
+                // Tap video untuk ensure play di mobile
+                if (videoRef.current && videoRef.current.paused) {
+                  videoRef.current.play().catch(console.warn)
+                }
               }}
             />
             <div className="absolute top-2 right-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded pointer-events-none backdrop-blur-sm">
